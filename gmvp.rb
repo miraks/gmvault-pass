@@ -24,17 +24,6 @@ def pass_for email
   "gmvault/#{email}"
 end
 
-def notify message
-  system "zenity --info --text #{Shellwords.escape(message)}"
-end
-
-log_dir = File.join BACKUP_PATH, 'log'
-log_path = File.join log_dir, "#{Date.today}.log"
-FileUtils.mkdir_p log_dir
-log = File.open log_path, 'a'
-
-notify 'Starting emails backup'
-
 EMAILS.each do |email|
   Open3.popen2("pass #{pass_for(email)}") do |stdin, stdout|
     oauth = stdout.gets.chomp
@@ -52,7 +41,7 @@ EMAILS.each do |email|
   command = "gmvault sync --type quick --db-dir #{dir_for(email)} --oauth2 --encrypt #{email}"
 
   Open3.popen2(command) do |stdin, stdout|
-    log.write stdout.read
+    STDOUT.write stdout.read
   end
 end
 
@@ -71,9 +60,5 @@ EMAILS.each do |email|
 end
 
 Open3.popen2('pass git push') do |stdin, stdout|
-  log.write stdout.read
+  STDOUT.write stdout.read
 end
-
-log.close
-
-notify 'Emails backup finished'
